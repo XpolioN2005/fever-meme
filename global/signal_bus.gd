@@ -7,3 +7,4 @@ signal answer_selected(choice)
 signal ui_ready_for_input
 signal game_finished(commentary)
 signal game_start()
+signal evaluation_loading()

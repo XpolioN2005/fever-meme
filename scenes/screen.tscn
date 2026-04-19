@@ -55,6 +55,10 @@ outline_modulate = Color(0.86343604, 5.318448e-06, 7.70092e-07, 1)
 uppercase = true
 autowrap_mode = 3
 
+[node name="counter" type="Label3D" parent="." unique_id=1392221164]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 3.7, 0.01)
+text = "0 / 10"
+
 [node name="screen_mesh" type="Node3D" parent="." unique_id=1856093911]
 
 [node name="screen" type="MeshInstance3D" parent="screen_mesh" unique_id=1325592727]
