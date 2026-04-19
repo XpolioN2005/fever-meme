@@ -1,0 +1,41 @@
+[gd_scene format=3 uid="uid://iyvvtxcfnfth"]
+
+[ext_resource type="Script" uid="uid://btvvay8c6qj0" path="res://scripts/btn.gd" id="1_57lfn"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_irodo"]
+size = Vector3(0.95, 0.3, 0.95)
+
+[sub_resource type="BoxMesh" id="BoxMesh_57lfn"]
+size = Vector3(0.5, 1.5, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_irodo"]
+albedo_color = Color(1, 0.12941177, 0, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_0lta0"]
+material = SubResource("StandardMaterial3D_irodo")
+radius = 0.6
+height = 0.3
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_57lfn"]
+size = Vector3(1, 2.052185, 1)
+
+[node name="btn" type="StaticBody3D" unique_id=637765398]
+transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, 0, 0, 0)
+script = ExtResource("1_57lfn")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="." unique_id=2090220327]
+transform = Transform3D(1, 0, 0, 0, 0.81915206, -0.57357645, 0, 0.57357645, 0.81915206, 0, 1.495189, 0)
+mesh = SubResource("BoxMesh_irodo")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1908197330]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+mesh = SubResource("BoxMesh_57lfn")
+
+[node name="btn" type="MeshInstance3D" parent="." unique_id=2064315906]
+unique_name_in_owner = true
+transform = Transform3D(0.59999985, 0, 0, 0, 0.49149123, -0.3441459, 0, 0.3441459, 0.49149123, 0, 1.6253831, 0.083917014)
+mesh = SubResource("SphereMesh_0lta0")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1457070821]
+transform = Transform3D(0.99999994, 0, 0, 0, 0.99999994, 0, 0, 0, 0.99999994, 0, 1.0260925, 0)
+shape = SubResource("BoxShape3D_57lfn")

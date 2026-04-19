@@ -1,0 +1,70 @@
+[gd_scene format=3 uid="uid://6ugje2d2dekb"]
+
+[ext_resource type="Shader" uid="uid://br5lnyoqx6ypd" path="res://assets/sky.tres" id="1_28aoi"]
+[ext_resource type="PackedScene" uid="uid://cc1m2a1obsyn4" path="res://addons/fpc/character.tscn" id="1_pq8q7"]
+[ext_resource type="Texture2D" uid="uid://donkfwkvrrfey" path="res://assets/floor.jpg" id="2_vvh5c"]
+[ext_resource type="PackedScene" uid="uid://iyvvtxcfnfth" path="res://scenes/btn.tscn" id="3_vvh5c"]
+[ext_resource type="PackedScene" uid="uid://dc3d6wbdrlwto" path="res://scenes/screen.tscn" id="5_jh1ax"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_jnlp7"]
+shader = ExtResource("1_28aoi")
+shader_parameter/sky_color = Color(0.03, 0.05, 0.11, 1)
+shader_parameter/star_base_color = Color(0.24986231, 0.9999998, 0.4047044, 1)
+shader_parameter/star_hue_offset = 0.450000021375
+shader_parameter/star_intensity = 0.08
+shader_parameter/star_twinkle_speed = 0.8
+shader_parameter/star_twinkle_intensity = 0.2
+shader_parameter/layer_scale = 20.0
+shader_parameter/layer_scale_step = 10.0
+shader_parameter/layers_count = 2
+
+[sub_resource type="Sky" id="Sky_l8v81"]
+sky_material = SubResource("ShaderMaterial_jnlp7")
+
+[sub_resource type="Environment" id="Environment_vyht1"]
+background_mode = 2
+sky = SubResource("Sky_l8v81")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_28aoi"]
+albedo_texture = ExtResource("2_vvh5c")
+uv1_scale = Vector3(10, 10, 10)
+
+[node name="root" type="Node3D" unique_id=816050195]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1126717874]
+transform = Transform3D(0.68835455, -0.6404675, 0.34054264, 0, 0.4694716, 0.88294756, -0.72537434, -0.607781, 0.3231629, 0, 0, 0)
+light_color = Color(0.7100718, 0.85077006, 0.9685605, 1)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2054692668]
+environment = SubResource("Environment_vyht1")
+
+[node name="Character" parent="." unique_id=1276407992 instance=ExtResource("1_pq8q7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6.6143208)
+default_reticle = "uid://coqpusufa8a6k"
+jumping_enabled = false
+in_air_momentum = false
+sprint_enabled = false
+crouch_enabled = false
+continuous_jumping = false
+jump_animation = false
+
+[node name="level" type="Node3D" parent="." unique_id=1704040593]
+
+[node name="foor" type="CSGBox3D" parent="level" unique_id=2068322870]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
+material_override = SubResource("StandardMaterial3D_28aoi")
+use_collision = true
+size = Vector3(40, 0.5, 40)
+
+[node name="buttons" type="Node3D" parent="level" unique_id=1179048965]
+
+[node name="btn" parent="level/buttons" unique_id=637765398 instance=ExtResource("3_vvh5c")]
+transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, 3, 0, 0)
+is_red = false
+
+[node name="btn2" parent="level/buttons" unique_id=1346456065 instance=ExtResource("3_vvh5c")]
+transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, -3, 0, 0)
+
+[node name="screen" parent="." unique_id=1848962626 instance=ExtResource("5_jh1ax")]
+transform = Transform3D(1, 0, 0, 0, 0.976296, -0.21643962, 0, 0.21643962, 0.976296, 0, 2.5624967, -4)

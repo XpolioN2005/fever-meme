@@ -1,0 +1,82 @@
+[gd_scene format=3 uid="uid://dc3d6wbdrlwto"]
+
+[ext_resource type="Script" uid="uid://hu51owrd7f7" path="res://scripts/screen.gd" id="1_erqjc"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dxyxt"]
+albedo_color = Color(0.008605309, 0.05216013, 0.09517766, 1)
+emission_enabled = true
+emission_energy_multiplier = 2.94
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_dxyxt"]
+material = SubResource("StandardMaterial3D_dxyxt")
+size = Vector2(8, 4)
+orientation = 2
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_erqjc"]
+size = Vector2(8, 0.2)
+orientation = 2
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_gakxr"]
+size = Vector2(0.2, 4.4)
+orientation = 2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_erqjc"]
+albedo_color = Color(0.1148968, 0.11489681, 0.1148968, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_dxyxt"]
+material = SubResource("StandardMaterial3D_erqjc")
+size = Vector3(8.4, 4.4, 0.3)
+
+[node name="screen" type="Node3D" unique_id=1848962626]
+transform = Transform3D(1, 0, 0, 0, 0.976296, -0.21643962, 0, 0.21643962, 0.976296, 0, 0, 0)
+script = ExtResource("1_erqjc")
+
+[node name="question" type="Label3D" parent="." unique_id=199675959]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.96769, 0.01)
+double_sided = false
+uppercase = true
+autowrap_mode = 3
+
+[node name="blue" type="Label3D" parent="." unique_id=262715949]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, 0.01)
+pixel_size = 0.004
+double_sided = false
+modulate = Color(0, 0.7256068, 0.6393892, 1)
+outline_modulate = Color(0.20436126, 0.4280339, 0.9816243, 1)
+uppercase = true
+autowrap_mode = 3
+
+[node name="red" type="Label3D" parent="." unique_id=1253522088]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, 0.01)
+pixel_size = 0.004
+double_sided = false
+modulate = Color(0.7124618, 0.28234503, 0, 1)
+outline_modulate = Color(0.86343604, 5.318448e-06, 7.70092e-07, 1)
+uppercase = true
+autowrap_mode = 3
+
+[node name="screen_mesh" type="Node3D" parent="." unique_id=1856093911]
+
+[node name="screen" type="MeshInstance3D" parent="screen_mesh" unique_id=1325592727]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+mesh = SubResource("PlaneMesh_dxyxt")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="screen_mesh" unique_id=568797424]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+mesh = SubResource("PlaneMesh_erqjc")
+
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="screen_mesh" unique_id=1300284760]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1, 0)
+mesh = SubResource("PlaneMesh_erqjc")
+
+[node name="MeshInstance3D4" type="MeshInstance3D" parent="screen_mesh" unique_id=2076435626]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.1, 2, 0)
+mesh = SubResource("PlaneMesh_gakxr")
+
+[node name="MeshInstance3D5" type="MeshInstance3D" parent="screen_mesh" unique_id=1742228721]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.1, 2, 0)
+mesh = SubResource("PlaneMesh_gakxr")
+
+[node name="back" type="MeshInstance3D" parent="screen_mesh" unique_id=566311347]
+transform = Transform3D(1, 0, 0, 0, 1.0000001, 0, 0, 0, 1.0000001, 0, 2, -0.151)
+mesh = SubResource("BoxMesh_dxyxt")
