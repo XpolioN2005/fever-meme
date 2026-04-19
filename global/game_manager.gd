@@ -102,12 +102,13 @@ func _on_dataset_loaded(_result, response_code, _headers, body):
 		return
 
 	var data = JSON.parse_string(body.get_string_from_utf8())
+	print(data)
 
-	if data == null or not data.has("qna"):
+	if data == null or not data.has("data") or not data["data"].has("qna"):
 		push_error("Invalid dataset")
 		return
 
-	qna = data["qna"]
+	qna = data["data"]["qna"]
 	loaded = true
 
 	signalBus.emit_signal("data_loaded")

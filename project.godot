@@ -20,6 +20,10 @@ config/icon="res://icon.svg"
 signalBus="*uid://cmeo4m8xleog5"
 GameManager="*uid://cftwog8cos3ob"
 
+[display]
+
+window/size/mode=3
+
 [input]
 
 ui_left={
