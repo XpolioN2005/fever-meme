@@ -20,8 +20,7 @@ app = FastAPI()
 # -------------------------
 # CONFIG
 # -------------------------
-# API_KEY = os.getenv("GEMINI_API_KEY")
-API_KEY = "AIzaSyAlODx67yZW-xefQDYSGhnHS3Yblhxqr3o"
+API_KEY = os.getenv("GEMINI_API_KEY")
 if not API_KEY:
     raise RuntimeError("GEMINI_API_KEY is not set")
 
