@@ -1,6 +1,5 @@
 extends StaticBody3D
 
-
 @export var is_red: bool = true
 
 @onready var mesh: MeshInstance3D = %btn
@@ -8,6 +7,7 @@ var material: StandardMaterial3D
 
 
 func _ready():
+	add_to_group("btn")
 	# duplicate material so each button is independent
 	material = mesh.get_surface_override_material(0)
 
@@ -38,6 +38,6 @@ func set_mode_blue():
 # Call this from raycast or input
 func press():
 	if is_red:
-		emit_signal("pressed", "red")
+		signalBus.emit_signal("answer_selected", "red")
 	else:
-		emit_signal("pressed", "blue")
+		signalBus.emit_signal("answer_selected", "blue")

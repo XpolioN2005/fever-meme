@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://donkfwkvrrfey" path="res://assets/floor.jpg" id="2_vvh5c"]
 [ext_resource type="PackedScene" uid="uid://iyvvtxcfnfth" path="res://scenes/btn.tscn" id="3_vvh5c"]
 [ext_resource type="PackedScene" uid="uid://dc3d6wbdrlwto" path="res://scenes/screen.tscn" id="5_jh1ax"]
+[ext_resource type="Script" uid="uid://bxfpfrmt4v4v4" path="res://button.gd" id="6_kycxp"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_jnlp7"]
 shader = ExtResource("1_28aoi")
@@ -68,3 +69,16 @@ transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, -3, 0, 0)
 
 [node name="screen" parent="." unique_id=1848962626 instance=ExtResource("5_jh1ax")]
 transform = Transform3D(1, 0, 0, 0, 0.976296, -0.21643962, 0, 0.21643962, 0.976296, 0, 2.5624967, -4)
+
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="." unique_id=793275952]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=840001812]
+
+[node name="Button" type="Button" parent="CanvasLayer" unique_id=1443853719]
+offset_right = 8.0
+offset_bottom = 8.0
+text = "start
+"
+script = ExtResource("6_kycxp")
+
+[connection signal="pressed" from="CanvasLayer/Button" to="CanvasLayer/Button" method="_on_pressed"]

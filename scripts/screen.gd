@@ -16,7 +16,9 @@ func _ready() -> void:
     await show_sequence(title, red, blue)
 
 func _on_update_qna(question: String, red: String, blue: String) -> void:
+    print("screen recevied")
     if typing:
+        print("still styping")
         return
     await show_sequence(question, red, blue)
 

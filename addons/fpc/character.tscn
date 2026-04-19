@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cc1m2a1obsyn4"]
 
 [ext_resource type="Script" uid="uid://hutuis63hgev" path="res://addons/fpc/character.gd" id="1_0t4e8"]
-[ext_resource type="Script" uid="uid://cl2d1b4yg60jr" path="res://addons/fpc/camera.gd" id="2_bx7cj"]
+[ext_resource type="Script" uid="uid://cl2d1b4yg60jr" path="res://scripts/camera.gd" id="2_bx7cj"]
 [ext_resource type="Script" uid="uid://dgfl3skp075ft" path="res://addons/fpc/EditorModule.gd" id="3_v3ckk"]
 [ext_resource type="Script" uid="uid://u5u7xxlvmcxx" path="res://addons/fpc/debug.gd" id="3_x1wcc"]
 
