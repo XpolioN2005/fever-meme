@@ -1,0 +1,47 @@
+name: Release
+
+env:
+  GODOT_VERSION: 4.6.2
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. v1.0.0)"
+        required: true
+        default: "v1.0.0"
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Build game
+        id: build
+        uses: firebelley/godot-export@v5.2.1
+        with:
+          godot_executable_download_url: https://github.com/godotengine/godot-builds/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot-builds/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
+          relative_project_path: ./src
+          use_preset_export_path: true
+          archive_output: true
+
+      - name: Show build directory
+        run: ls -R "${{ steps.build.outputs.build_directory }}"
+
+      - name: Show archive directory
+        run: ls -R "${{ steps.build.outputs.archive_directory }}"
+
+      - name: Create GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generateReleaseNotes: true
+          tag: ${{ github.event.inputs.version }}
+          artifacts: ${{ steps.build.outputs.archive_directory }}/**/*.zip
+          allowUpdates: true
