@@ -10,8 +10,12 @@ var loaded: bool = false
 var player_answers: Array = []
 
 var input_locked: bool = true
+var game_started := false
 var game_finished := false
 var evaluation_mode := false
+var eval_playing := false
+
+var _pending_commentary: String = ""
 
 # -------------------------
 # API
@@ -26,6 +30,7 @@ var api_submit := api_base + "/submit"
 var audio_player: AudioStreamPlayer
 var http_audio: HTTPRequest
 var http_data: HTTPRequest
+
 
 # =========================================================
 # INIT
@@ -53,7 +58,7 @@ func _init_nodes():
 
 
 # =========================================================
-# NETWORK LAYER (GENERIC)
+# NETWORK
 # =========================================================
 func api_get(url: String, callback: Callable):
 	var http = HTTPRequest.new()
@@ -77,7 +82,7 @@ func api_post(url: String, payload: Dictionary, callback: Callable):
 
 
 # =========================================================
-# DATA LOADING
+# DATA
 # =========================================================
 func load_dataset():
 	api_get(api_qna, _on_dataset_loaded)
@@ -95,24 +100,46 @@ func _on_dataset_loaded(_result, response_code, _headers, body):
 		return
 
 	qna = data["qna"]
-	index = 0
 	loaded = true
-	player_answers.clear()
 
 	signalBus.emit_signal("data_loaded")
-	start_game()
+
+
+# =========================================================
+# RESET SYSTEM (IMPORTANT)
+# =========================================================
+func reset_game():
+	index = 0
+	player_answers.clear()
+
+	input_locked = true
+	game_started = false
+	game_finished = false
+	evaluation_mode = false
+	eval_playing = false
+
+	_pending_commentary = ""
+
+
+# =========================================================
+# GAME START
+# =========================================================
+func start_game():
+	if qna.is_empty():
+		return
+
+	reset_game()
+
+	game_started = true
+	input_locked = true
+
+	index = 0
+	_show_question()
 
 
 # =========================================================
 # GAME FLOW
 # =========================================================
-func start_game():
-	if qna.is_empty():
-		return
-	index = 0
-	_show_question()
-
-
 func _show_question():
 	if game_finished:
 		return
@@ -134,12 +161,17 @@ func _show_question():
 
 
 func _on_ui_ready():
-	input_locked = false
+	if game_started:
+		input_locked = false
 
 
 func _on_answer_selected(choice: String):
+	if not game_started:
+		return
+
 	if input_locked or game_finished:
 		return
+
 	if choice != "red" and choice != "blue":
 		return
 
@@ -147,15 +179,15 @@ func _on_answer_selected(choice: String):
 
 
 # =========================================================
-# ANSWER HANDLER
+# ANSWERS
 # =========================================================
 func _process_answer(choice: String):
 	input_locked = true
 
 	var q = qna[index]
 
-	var response = _get_response(q, choice)
-	var audio = _get_audio(q, choice)
+	var response = q.get(choice + "_response", "")
+	var audio = q.get(choice + "_audio", "")
 
 	player_answers.append({
 		"question": q["question"],
@@ -169,16 +201,8 @@ func _process_answer(choice: String):
 		_next()
 
 
-func _get_response(q: Dictionary, choice: String) -> String:
-	return q.get(choice + "_response", "")
-
-
-func _get_audio(q: Dictionary, choice: String) -> String:
-	return q.get(choice + "_audio", "")
-
-
 # =========================================================
-# GAME PROGRESSION
+# PROGRESSION
 # =========================================================
 func _next():
 	index += 1
@@ -187,6 +211,7 @@ func _next():
 
 func finish_game():
 	game_finished = true
+	evaluation_mode = true
 
 	api_post(
 		api_submit,
@@ -196,14 +221,10 @@ func finish_game():
 
 
 # =========================================================
-# AUDIO SYSTEM (SHARED)
+# GAME AUDIO
 # =========================================================
 func _play_game_audio(url: String):
 	_play_audio(url, _on_game_audio_done)
-
-
-func _play_eval_audio(url: String):
-	_play_audio(url, _on_eval_audio_done)
 
 
 func _play_audio(url: String, callback: Callable):
@@ -224,7 +245,7 @@ func _on_audio_finished():
 
 
 # =========================================================
-# EVALUATION
+# EVALUATION FLOW (FIXED ORDER)
 # =========================================================
 func _on_submit_done(_result, response_code, _headers, body):
 	var commentary := "Server error"
@@ -236,28 +257,44 @@ func _on_submit_done(_result, response_code, _headers, body):
 			commentary = data.get("commentary", "")
 			audio = data.get("audio", "")
 
-	game_finished = true
-	evaluation_mode = true
-
-	signalBus.emit_signal("game_finished", commentary)
+	_pending_commentary = commentary
 
 	if audio != "":
+		eval_playing = true
 		_play_eval_audio(audio)
+	else:
+		_emit_and_finalize()
+
+
+func _play_eval_audio(url: String):
+	_play_audio(url, _on_eval_audio_done)
 
 
 func _on_eval_audio_done(_result, response_code, _headers, body):
 	if response_code != 200:
+		_emit_and_finalize()
 		return
 
 	_play_stream(body, _on_eval_finished)
 
 
 func _on_eval_finished():
+	eval_playing = false
+	_emit_and_finalize()
+
+
+func _emit_and_finalize():
+	signalBus.emit_signal("game_finished", _pending_commentary)
+	_finalize_game()
+
+
+func _finalize_game():
 	evaluation_mode = false
+	game_finished = true
 
 
 # =========================================================
-# AUDIO STREAM HELPER
+# AUDIO STREAM
 # =========================================================
 func _play_stream(body: PackedByteArray, on_finish: Callable):
 	var stream = AudioStreamMP3.new()

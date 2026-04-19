@@ -1,43 +1,78 @@
 extends StaticBody3D
 
-@export var is_red: bool = true
+enum ButtonType {
+	RED,
+	BLUE,
+	START
+}
+
+@export var type: ButtonType = ButtonType.RED
 
 @onready var mesh: MeshInstance3D = %btn
 var material: StandardMaterial3D
 
+# -------------------------
+# STATE
+# -------------------------
+var data_loaded: bool = false
+
 
 func _ready():
 	add_to_group("btn")
-	# duplicate material so each button is independent
+
+	_setup_material()
+	_update_visual()
+
+	signalBus.connect("data_loaded", _on_data_loaded)
+
+
+# -------------------------
+# DATA LOADED
+# -------------------------
+func _on_data_loaded():
+	data_loaded = true
+
+
+# -------------------------
+# MATERIAL
+# -------------------------
+func _setup_material():
 	material = mesh.get_surface_override_material(0)
 
 	if material == null:
 		material = StandardMaterial3D.new()
 		mesh.set_surface_override_material(0, material)
 
-	update_color()
+
+# -------------------------
+# VISUAL
+# -------------------------
+func _update_visual():
+	match type:
+		ButtonType.RED:
+			material.albedo_color = Color(1, 0, 0)
+
+		ButtonType.BLUE:
+			material.albedo_color = Color(0, 0, 1)
+
+		ButtonType.START:
+			material.albedo_color = Color(0, 1, 0)
 
 
-func update_color():
-	if is_red:
-		material.albedo_color = Color(1, 0, 0)  # red
-	else:
-		material.albedo_color = Color(0, 0, 1)  # blue
-
-
-func set_mode_red():
-	is_red = true
-	update_color()
-
-
-func set_mode_blue():
-	is_red = false
-	update_color()
-
-
-# Call this from raycast or input
+# -------------------------
+# INPUT
+# -------------------------
 func press():
-	if is_red:
-		signalBus.emit_signal("answer_selected", "red")
-	else:
-		signalBus.emit_signal("answer_selected", "blue")
+	# BLOCK START UNTIL DATA IS READY
+	if type == ButtonType.START and not data_loaded:
+		return
+
+	match type:
+		ButtonType.RED:
+			signalBus.emit_signal("answer_selected", "red")
+
+		ButtonType.BLUE:
+			signalBus.emit_signal("answer_selected", "blue")
+
+		ButtonType.START:
+			signalBus.emit_signal("game_start")
