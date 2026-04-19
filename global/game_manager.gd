@@ -27,7 +27,7 @@ var start_locked := false
 # -------------------------
 # API
 # -------------------------
-var api_base := "http://127.0.0.1:8000"
+var api_base := "https://fever-meme.onrender.com"
 var api_qna := api_base + "/qna"
 var api_submit := api_base + "/submit"
 
