@@ -6,48 +6,47 @@ import os
 import uuid
 import edge_tts
 import asyncio
-import html
 import logging
 
 app = FastAPI()
 
-API_KEY = "AIzaSyCyugDeWAHBC2PZryTl0gy7crBa8SNwrNE"
+API_KEY = ""
 
 URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
     "gemini-2.5-flash-lite:generateContent?key=" + API_KEY
 )
 
-DATA = None
-
 AUDIO_DIR = "audio"
 os.makedirs(AUDIO_DIR, exist_ok=True)
 
-# -------------------------
-# LOGGING
-# -------------------------
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("tts")
 
-# limit concurrency (prevents Edge TTS crashes)
 sem = asyncio.Semaphore(5)
 
-# -------------------------
-# CLEAN AUDIO FOLDER
-# -------------------------
-
-
-def clear_audio_folder():
-    for f in os.listdir(AUDIO_DIR):
-        path = os.path.join(AUDIO_DIR, f)
-        if os.path.isfile(path):
-            os.remove(path)
+DATA = None
 
 # -------------------------
-# CLEAN GEMINI JSON
+# UTIL: GEMINI CALL (REUSED)
 # -------------------------
 
 
+def call_gemini(prompt: str) -> str:
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}]
+    }
+
+    res = requests.post(URL, json=payload)
+
+    logger.info(f"GEMINI STATUS: {res.status_code}")
+
+    return res.json()["candidates"][0]["content"]["parts"][0]["text"]
+
+
+# -------------------------
+# UTIL: CLEAN JSON (REUSED)
+# -------------------------
 def clean_json(text: str):
     text = text.strip()
 
@@ -60,18 +59,15 @@ def clean_json(text: str):
 
     return json.loads(text)
 
-# -------------------------
-# TTS GENERATION
-# -------------------------
 
-
-async def generate_voice(text: str,) -> str:
+# -------------------------
+# UTIL: TTS (REUSED)
+# -------------------------
+async def generate_voice(text: str) -> str:
     async with sem:
         try:
-            id = uuid.uuid4()
-            logger.info(f"TTS START | ID = {id}")
-
-            filename = f"{id}.mp3"
+            file_id = uuid.uuid4()
+            filename = f"{file_id}.mp3"
             path = os.path.join(AUDIO_DIR, filename)
 
             communicate = edge_tts.Communicate(
@@ -81,18 +77,19 @@ async def generate_voice(text: str,) -> str:
 
             await communicate.save(path)
 
-            logger.info(f"TTS DONE | file={filename}")
+            logger.info(f"TTS DONE | {filename}")
 
             return "/audio/" + filename
 
         except Exception as e:
-            logger.error(f"TTS FAILED | Id ={id} | error={e}")
+            logger.error(f"TTS FAILED: {e}")
             return ""
 
+
 # -------------------------
-# GEMINI PROMPT
+# QNA PROMPT
 # -------------------------
-prompt = """
+QNA_PROMPT = """
 Create a FUNNY AI commentary game dataset.
 
 Return ONLY valid JSON. No markdown. No code blocks.
@@ -126,7 +123,12 @@ Format:
 }
 """
 
-eval_prompt_template = """
+
+# -------------------------
+# COMMENTARY PROMPT BUILDER
+# -------------------------
+def build_eval_prompt(data: dict) -> str:
+    return f"""
 You are an AI game judge.
 
 Analyze the player's answers and generate a funny, slightly dramatic commentary.
@@ -134,37 +136,25 @@ Analyze the player's answers and generate a funny, slightly dramatic commentary.
 Return ONLY valid JSON.
 
 Input:
-{data}
+{json.dumps(data, indent=2)}
 
-Output format:
-{
+Output:
+{{
   "commentary": "short funny evaluation (1-3 sentences)"
-}
+}}
 """
 
-# -------------------------
-# GENERATE QNA + TTS
-# -------------------------
 
-
+# -------------------------
+# CORE LOGIC: GENERATE QNA
+# -------------------------
 async def generate_qna():
-    payload = {
-        "contents": [
-            {"parts": [{"text": prompt}]}
-        ]
-    }
+    logger.info("CALLING GEMINI FOR QNA")
 
-    logger.info("CALLING GEMINI")
-
-    res = requests.post(URL, json=payload)
-    text = res.json()["candidates"][0]["content"]["parts"][0]["text"]
-
-    data = clean_json(text)
-
-    logger.info("GEMINI DATA RECEIVED")
+    raw = call_gemini(QNA_PROMPT)
+    data = clean_json(raw)
 
     tasks = []
-
     for item in data["qna"]:
         tasks.append(generate_voice(item["red_response"]))
         tasks.append(generate_voice(item["blue_response"]))
@@ -179,63 +169,51 @@ async def generate_qna():
 
     return data
 
+
+# -------------------------
+# CORE LOGIC: COMMENTARY
+# -------------------------
+async def generate_commentary(payload: dict):
+    logger.info("CALLING GEMINI FOR COMMENTARY")
+
+    prompt = build_eval_prompt(payload)
+    raw = call_gemini(prompt)
+
+    data = clean_json(raw)
+    commentary = data.get("commentary", "No commentary")
+
+    audio = await generate_voice(commentary)
+
+    return commentary, audio
+
+
 # -------------------------
 # STARTUP
 # -------------------------
-
-
 @app.on_event("startup")
 async def startup():
     global DATA
     try:
-        clear_audio_folder()
-        logger.info("STARTUP: generating QNA")
         DATA = await generate_qna()
-        logger.info("STARTUP: READY")
-
+        logger.info("STARTUP COMPLETE")
     except Exception as e:
         logger.error(f"STARTUP FAILED: {e}")
         DATA = {"qna": []}
 
+
 # -------------------------
 # API
 # -------------------------
-
-
 @app.post("/submit")
 async def submit(payload: dict):
     try:
-        logger.info("SUBMIT RECEIVED")
-        logger.info(f"PAYLOAD: {payload}")
+        logger.info(f"SUBMIT: {payload}")
 
-        prompt = eval_prompt_template.replace(
-            "{data}",
-            json.dumps(payload, indent=2)
-        )
-
-        gemini_payload = {
-            "contents": [
-                {"parts": [{"text": prompt}]}
-            ]
-        }
-
-        res = requests.post(URL, json=gemini_payload)
-
-        logger.info(f"GEMINI STATUS: {res.status_code}")
-        logger.info(f"GEMINI RAW: {res.text}")
-
-        text = res.json()["candidates"][0]["content"]["parts"][0]["text"]
-
-        data = clean_json(text=text)
-        commentary = data.get("commentary", "No commentary")
-
-        audio_url = await generate_voice(commentary)
-
-        logger.info("SUBMIT DONE")
+        commentary, audio = await generate_commentary(payload)
 
         return {
             "commentary": commentary,
-            "audio": audio_url
+            "audio": audio
         }
 
     except Exception as e:
@@ -252,6 +230,6 @@ def get_qna():
 
 
 # -------------------------
-# STATIC AUDIO
+# STATIC FILES
 # -------------------------
 app.mount("/audio", StaticFiles(directory="audio"), name="audio")
