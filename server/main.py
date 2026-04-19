@@ -9,13 +9,19 @@ import asyncio
 import logging
 from typing import List
 
+import time
+import random
+
+MAX_RETRIES = 5
+BASE_DELAY = 1.5  # seconds
+
 app = FastAPI()
 
 # -------------------------
 # CONFIG
 # -------------------------
 # API_KEY = os.getenv("GEMINI_API_KEY")
-API_KEY = ""
+API_KEY = "AIzaSyAlODx67yZW-xefQDYSGhnHS3Yblhxqr3o"
 if not API_KEY:
     raise RuntimeError("GEMINI_API_KEY is not set")
 
@@ -89,12 +95,31 @@ def call_gemini(prompt: str) -> str:
         "contents": [{"parts": [{"text": prompt}]}]
     }
 
-    res = requests.post(URL, json=payload)
+    for attempt in range(MAX_RETRIES):
+        try:
+            start = time.time()
 
-    if res.status_code != 200:
-        raise RuntimeError(f"Gemini error: {res.text}")
+            res = requests.post(URL, json=payload, timeout=30)
 
-    return res.json()["candidates"][0]["content"]["parts"][0]["text"]
+            duration = time.time() - start
+            logger.info(
+                f"Gemini call attempt={attempt+1} status={res.status_code} time={duration:.2f}s")
+
+            if res.status_code == 200:
+                return res.json()["candidates"][0]["content"]["parts"][0]["text"]
+
+            # rate limit or transient failure
+            logger.warning(f"Gemini error: {res.status_code} {res.text}")
+
+        except Exception as e:
+            logger.error(f"Gemini exception attempt={attempt+1}: {e}")
+
+        # exponential backoff + jitter
+        sleep_time = BASE_DELAY * (2 ** attempt) + random.uniform(0, 0.5)
+        logger.info(f"Retrying in {sleep_time:.2f}s")
+        time.sleep(sleep_time)
+
+    raise RuntimeError("Gemini failed after retries")
 
 
 # -------------------------
