@@ -22,6 +22,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://xpolion.itch.io",
+        "https://html.itch.zone"
     ],
     allow_credentials=True,
     allow_methods=["*"],
