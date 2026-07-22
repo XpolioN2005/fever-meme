@@ -1,11 +1,5 @@
 name: Release
 
-permissions:
-  contents: write
-
-env:
-  GODOT_VERSION: 4.6.2
-
 on:
   workflow_dispatch:
     inputs:
@@ -14,37 +8,73 @@ on:
         required: true
         default: "v1.0.0"
 
+      deploy_to_itchio:
+        description: "Deploy Web build to itch.io"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  GODOT_VERSION: "4.6.2"
+
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout repository
       - name: Checkout
         uses: actions/checkout@v4
         with:
           lfs: true
 
+      # Build Godot game
       - name: Build game
         id: build
         uses: firebelley/godot-export@v5.2.1
         with:
           godot_executable_download_url: https://github.com/godotengine/godot-builds/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
           godot_export_templates_download_url: https://github.com/godotengine/godot-builds/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
-          relative_project_path: .
+          relative_project_path: ./src
           use_preset_export_path: true
           archive_output: true
 
+      # Show exported files
       - name: Show build directory
-        run: ls -R "${{ steps.build.outputs.build_directory }}"
+        run: |
+          echo "Build directory:"
+          ls -R "${{ steps.build.outputs.build_directory }}"
 
+      # Show generated archives
       - name: Show archive directory
-        run: ls -R "${{ steps.build.outputs.archive_directory }}"
+        run: |
+          echo "Archive directory:"
+          ls -R "${{ steps.build.outputs.archive_directory }}"
 
+      # Download Butler
+      - name: Make get_butler.sh executable
+        if: ${{ inputs.deploy_to_itchio }}
+        run: chmod +x ./get_butler.sh
+
+      # Deploy Web build to itch.io
+      - name: Deploy to itch.io
+        if: ${{ inputs.deploy_to_itchio }}
+        run: |
+          ./get_butler.sh
+
+          BUTLER_API_KEY=${{ secrets.BUTLER_API_KEY }} ./butler --verbose push \
+            "${{ steps.build.outputs.build_directory }}/web_release" \
+            "${{ vars.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAME }}:web"
+
+      # Create GitHub Release
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           generateReleaseNotes: true
           tag: ${{ github.event.inputs.version }}
-          artifacts: ${{ steps.build.outputs.archive_directory }}/**/*.zip
+          artifacts: "${{ steps.build.outputs.archive_directory }}/**/*.zip"
           allowUpdates: true
